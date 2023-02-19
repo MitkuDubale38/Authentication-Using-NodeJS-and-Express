@@ -28,7 +28,10 @@ router.post("/signup", async(req, res, next) => {
         res.status(200).json({ success: true, data: { message: "Error user with that email address already exists" }, successfullySignedUp: false });
     } else {
         try {
-            await newUser.save();
+            await newUser.save((err, user) => {
+                if (err) throw err;
+                res.json(user);
+            });
         } catch {
             const error = new Error("Error! Something went wrong.");
             return next(error);

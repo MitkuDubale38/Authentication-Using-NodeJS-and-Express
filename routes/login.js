@@ -20,31 +20,41 @@ router.post("/login", async(req, res, next) => {
         const error = new Error("Error! Something went wrong.");
         return next(error);
     }
-    if (!existingUser || existingUser.password != password) {
+
+    if (!existingUser) {
         res.status(401).json({ success: false, data: { message: "Wrong credentials please try again" } });
     } else {
-        let token;
-        try {
-            //Creating jwt token
-            token = jwt.sign({ userId: existingUser.id, email: existingUser.email },
-                key, { expiresIn: jwtExpireTime }
-            );
-        } catch (err) {
-            console.log(err);
-            const error = new Error("Error! Something went wrong.");
-            return next(error);
-        }
+        return existingUser.comparePassword(password, function(error, isMatch) {
+                if (isMatch && !error) {
+                    let token;
+                    try {
+                        //Creating jwt token
+                        token = jwt.sign({ userId: existingUser.id, email: existingUser.email },
+                            key, { expiresIn: jwtExpireTime }
+                        );
+                    } catch (err) {
+                        console.log(err);
+                        const error = new Error("Error! Something went wrong.");
+                        return next(error);
+                    }
 
-        res
-            .status(200)
-            .json({
-                success: true,
-                data: {
-                    userId: existingUser.id,
-                    email: existingUser.email,
-                    token: token,
-                },
-            });
+                    res
+                        .status(200)
+                        .json({
+                            success: true,
+                            data: {
+                                userId: existingUser.id,
+                                email: existingUser.email,
+                                token: token,
+                            },
+                        });
+                } else {
+                    res.status(401).json({ success: false, data: { message: "Wrong credentials please try again" } });
+                }
+
+            },
+
+        )
     }
 });
 
