@@ -3,9 +3,11 @@ const router = express.Router();
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const dotenv = require('dotenv');
-//jwt secret congig
+//jwt secret config
 const key = process.env.JWT_SECRET_KEY;
-const jwtExpireTime = process.env.JWT_EXPIRE_TIME;
+const jwtExpireTime = process.env.JWT_TOKEN_EXPIRE_TIME;
+const jwtRefreshExpireTime = process.env.REFRESH_TOKEN_EXPIRE_TIME;
+const JWT_REFRESH_SECRET_KEY = process.env.JWT_REFRESH_SECRET_KEY;
 
 dotenv.config({ path: '.env' });
 
@@ -14,6 +16,7 @@ router.post("/login", async(req, res, next) => {
     let { email, password } = req.body;
 
     let existingUser;
+    let refreshToken;
     try {
         existingUser = await User.findOne({ email: email });
     } catch {
@@ -32,6 +35,10 @@ router.post("/login", async(req, res, next) => {
                         token = jwt.sign({ userId: existingUser.id, email: existingUser.email },
                             key, { expiresIn: jwtExpireTime }
                         );
+
+                        // refresh token
+                        refreshToken = jwt.sign(existingUser.toJSON(), JWT_REFRESH_SECRET_KEY, { expiresIn: jwtRefreshExpireTime })
+
                     } catch (err) {
                         console.log(err);
                         const error = new Error("Error! Something went wrong.");
@@ -45,7 +52,8 @@ router.post("/login", async(req, res, next) => {
                             data: {
                                 userId: existingUser.id,
                                 email: existingUser.email,
-                                token: token,
+                                acesstoken: token,
+                                refreshToken: refreshToken,
                             },
                         });
                 } else {
