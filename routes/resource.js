@@ -3,7 +3,7 @@ const router = express.Router();
 const jwt = require("jsonwebtoken");
 const dotenv = require('dotenv');
 
-//jwt secret congig
+//jwt secret config
 const key = process.env.JWT_SECRET_KEY;
 const jwtExpireTime = process.env.JWT_EXPIRE_TIME;
 

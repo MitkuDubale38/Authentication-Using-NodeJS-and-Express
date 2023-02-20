@@ -4,9 +4,11 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const dotenv = require('dotenv');
 
-//jwt secret congig
+//jwt secret config
 const key = process.env.JWT_SECRET_KEY;
-const jwtExpireTime = process.env.JWT_EXPIRE_TIME;
+const jwtExpireTime = process.env.JWT_TOKEN_EXPIRE_TIME;
+const jwtRefreshExpireTime = process.env.REFRESH_TOKEN_EXPIRE_TIME;
+const JWT_REFRESH_SECRET_KEY = process.env.JWT_REFRESH_SECRET_KEY;
 
 dotenv.config({ path: '.env' });
 //signup
@@ -37,10 +39,13 @@ router.post("/signup", async(req, res, next) => {
             return next(error);
         }
         let token;
+        let refreshToken;
         try {
             token = jwt.sign({ userId: newUser.id, email: newUser.email },
                 key, { expiresIn: jwtExpireTime }
             );
+            // refresh token
+            refreshToken = jwt.sign(newUser.toJSON(), JWT_REFRESH_SECRET_KEY, { expiresIn: jwtRefreshExpireTime });
         } catch (err) {
             const error = new Error("Error! Something went wrong.");
             return next(error);
@@ -52,7 +57,8 @@ router.post("/signup", async(req, res, next) => {
                 data: {
                     userId: newUser.id,
                     email: newUser.email,
-                    token: token
+                    acesstoken: token,
+                    refreshToken: refreshToken,
                 },
                 successfullySignedUp: true
             });
